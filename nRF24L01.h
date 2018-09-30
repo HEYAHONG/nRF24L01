@@ -10,6 +10,23 @@
 #define MOSI            P2_4
 #define MISO            P2_3
 #define IRQ             P2_2
+
+#define CE_Write(a)     (CE=a)
+#define CSN_Write(a)     (CSN=a)
+#define SCK_Write(a)     (SCK=a)
+#define MOSI_Write(a)     (MOSI=a)
+#define MISO_Write(a)     (MISO=a)
+#define IRQ_Write(a)     (IRQ=a)
+
+#define CE_Read()       (CE)
+#define CSN_Read()       (CSN)
+#define SCK_Read()       (SCK)
+#define MOSI_Read()       (MOSI)
+#define MISO_Read()       (MISO)
+#define IRQ_Read()       (IRQ)
+
+#define Soft_SPI_Init()   
+`
 #else 
 #error not supported	
 #endif
