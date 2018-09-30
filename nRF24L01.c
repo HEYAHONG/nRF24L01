@@ -1,4 +1,9 @@
 #include "nRF24L01.h"
+// 发送地址
+const unsigned char TX_ADDRESS[TX_ADR_WIDTH]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+// 接收地址
+const unsigned char RX_ADDRESS[RX_ADR_WIDTH]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
 
 unsigned char nRF24L01_read_while_write(unsigned char data)
 {
@@ -11,6 +16,7 @@ unsigned char nRF24L01_read_while_write(unsigned char data)
     data |= MISO;
     SCK = 0;
   }
+  return data;
 }
 
 unsigned char nRF24L01_write_to_addr(unsigned char address, unsigned char data)
@@ -69,17 +75,17 @@ unsigned char nRF24L01_transmit_packet(unsigned char *buffer)
 {
   unsigned char state;
   CE = 0;
-  nRF24L01_write_to_address_from_buffer(WR_TX_PLOAD, buffer, TX_PLOAD_WIDTH);
+  nRF24L01_write_to_addr_from_buf(WR_TX_PLOAD, buffer, TX_PLOAD_WIDTH);
   CE = 1;
   // 等待发送完成
-  while(NRF_IRQ==1);
-  state = nRF24L01_read_from_address(STATUS);
-  nRF24L01_write_to_address(WRITE_REG + STATUS, state);
+  while(IRQ==1);
+  state = nRF24L01_read_from_addr(STATUS);
+  nRF24L01_write_to_addr(WRITE_REG + STATUS, state);
   // 达到最大重发次数
   if(state & MAX_TX)
   {
     // 清除TX FIFO寄存器
-    nRF24L01_write_to_address(FLUSH_TX, 0xFF);
+    nRF24L01_write_to_addr(FLUSH_TX, 0xFF);
     return MAX_TX;
   }
   if(state & TX_OK)
@@ -97,14 +103,14 @@ unsigned char nRF24L01_transmit_packet(unsigned char *buffer)
 unsigned char nRF24L01_receive_packet(unsigned char *buffer)
 {
   unsigned char state;
-  state = nRF24L01_read_from_address(STATUS);
+  state = nRF24L01_read_from_addr(STATUS);
   // 清除TX_DS或MAX_RT中断标志
-  nRF24L01_write_to_address(WRITE_REG + STATUS, state);
+  nRF24L01_write_to_addr(WRITE_REG + STATUS, state);
   if(state & RX_OK)
   {
     CE = 0;
-    nRF24L01_read_from_address_to_buffer(RD_RX_PLOAD, buffer, RX_PLOAD_WIDTH);
-    nRF24L01_write_to_address(FLUSH_RX, 0xFF);
+    nRF24L01_read_from_addr_to_buf(RD_RX_PLOAD, buffer, RX_PLOAD_WIDTH);
+    nRF24L01_write_to_addr(FLUSH_RX, 0xFF);
     CE = 1;
     // delay 150 us
     return 0;
@@ -119,14 +125,14 @@ unsigned char nRF24L01_receive_packet(unsigned char *buffer)
  */
 unsigned char nRF24L01_check()
 {
-  unsigned char i, length = 5;
-  unsigned char in_buffer[length] = { 0x11, 0x22, 0x33, 0x44, 0x55 };
-  unsigned char out_buffer[length] = { 0x00 };
+  unsigned char i,length=5;
+  unsigned char in_buffer[]={0x11,0x22,0x33,0x44,0x55};
+  unsigned char out_buffer[]={0x00,0x00,0x00,0x00,0x00};
   SCK=0;
   CSN=1;
   CE=0;
-  nRF24L01_write_to_address_from_buffer(WRITE_REG + TX_ADDR, in_buffer, length);
-  nRF24L01_read_from_address_to_buffer(READ_REG + TX_ADDR, out_buffer, length);
+  nRF24L01_write_to_addr_from_buf(WRITE_REG + TX_ADDR, in_buffer, length);
+  nRF24L01_read_from_addr_to_buf(READ_REG + TX_ADDR, out_buffer, length);
   for(i=0; i<length; i++)
     if(out_buffer[i] != in_buffer[i])
       return 1;
@@ -137,25 +143,25 @@ void nRF24L01_configuration()
 {
   CE=0;
   // 选择通道0的有效数据宽度
-  nRF24L01_write_to_address(WRITE_REG + RX_PW_P0, RX_PLOAD_WIDTH);
+  nRF24L01_write_to_addr(WRITE_REG + RX_PW_P0, RX_PLOAD_WIDTH);
   // 清除RX FIFO寄存器
-  nRF24L01_write_to_address(FLUSH_RX, 0xff);
+  nRF24L01_write_to_addr(FLUSH_RX, 0xff);
   // 写TX节点地址
-  nRF24L01_write_to_address_from_buffer(WRITE_REG + TX_ADDR, (uchar*)TX_ADDRESS, TX_ADR_WIDTH);
+  nRF24L01_write_to_addr_from_buf(WRITE_REG + TX_ADDR, (uchar*)TX_ADDRESS, TX_ADR_WIDTH);
   // 设置TX节点地址,主要为了使能ACK
-  nRF24L01_write_to_address_from_buffer(WRITE_REG + RX_ADDR_P0, (uchar*)RX_ADDRESS, RX_ADR_WIDTH);
+  nRF24L01_write_to_addr_from_buf(WRITE_REG + RX_ADDR_P0, (uchar*)RX_ADDRESS, RX_ADR_WIDTH);
   // 使能通道0的自动应答
-  nRF24L01_write_to_address(WRITE_REG + EN_AA, 0x01);
+  nRF24L01_write_to_addr(WRITE_REG + EN_AA, 0x01);
   // 使能通道0的接收地址
-  nRF24L01_write_to_address(WRITE_REG + EN_RXADDR,  0x01);
+  nRF24L01_write_to_addr(WRITE_REG + EN_RXADDR,  0x01);
   // 设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-  nRF24L01_write_to_address(WRITE_REG + SETUP_RETR, 0x1a);
+  nRF24L01_write_to_addr(WRITE_REG + SETUP_RETR, 0x1a);
   // 设置RF通道为2.400GHz  频率=2.4+0GHz
-  nRF24L01_write_to_address(WRITE_REG + RF_CH, 0);
+  nRF24L01_write_to_addr(WRITE_REG + RF_CH, 0);
   // 设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-  nRF24L01_write_to_address(WRITE_REG + RF_SETUP, 0x0F);
+  nRF24L01_write_to_addr(WRITE_REG + RF_SETUP, 0x0F);
   // 配置基本工作模式的参数;PWR_UP,EN_CRC,16BIT_CRC,接收模式,开启所有中断
-  nRF24L01_write_to_address(WRITE_REG + CONFIG, 0x0f);
+  nRF24L01_write_to_addr(WRITE_REG + CONFIG, 0x0f);
   // CE置高，使能发送
   CE=1;
 }
@@ -163,11 +169,11 @@ void nRF24L01_configuration()
 void nRF24L01_send_buffer(unsigned char *buffer)
 {
   CE = 0;
-  nRF24L01_write_to_address(WRITE_REG + CONFIG, 0x0E);
+  nRF24L01_write_to_addr(WRITE_REG + CONFIG, 0x0E);
   CE = 1;
   // delay 15 us
   nRF24L01_transmit_packet(buffer);
   CE = 0;
-  nRF24L01_write_to_address(WRITE_REG + CONFIG, 0x0F);
+  nRF24L01_write_to_addr(WRITE_REG + CONFIG, 0x0F);
   CE = 1;
 }

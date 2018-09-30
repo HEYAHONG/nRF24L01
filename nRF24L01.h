@@ -1,6 +1,26 @@
 #ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
+
+#ifdef __SDCC_mcs51 //使用SDCC作为51编译器
+#include "mcs51/8051.h"
+#define CE              P2_7
+#define CSN             P2_6
+#define SCK             P2_5
+#define MOSI            P2_4
+#define MISO            P2_3
+#define IRQ             P2_2
+#else 
+#error not supported	
+#endif
+
+
+
+//定义数据设置
+#define uchar unsigned char
+#define uint  unsigned int
+
+
 // NRF24L01寄存器操作命令
 #define READ_REG        0x00  //读配置寄存器,低5位为寄存器地址
 #define WRITE_REG       0x20  //写配置寄存器,低5位为寄存器地址
@@ -48,44 +68,39 @@
 #define TX_PLOAD_WIDTH  32    //32字节有效数据宽度
 #define RX_PLOAD_WIDTH  32    //32字节有效数据宽度
 
-#define CE              P2_7
-#define CSN             P2_6
-#define SCK             P2_5
-#define MOSI            P2_4
-#define MISO            P2_3
-#define IRQ             P2_2
+
 
 // 发送地址
-const unsigned char TX_ADDRESS[TX_ADR_WIDTH]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+extern const unsigned char TX_ADDRESS[TX_ADR_WIDTH];
 // 接收地址
-const unsigned char RX_ADDRESS[RX_ADR_WIDTH]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+extern const unsigned char RX_ADDRESS[RX_ADR_WIDTH];
 
 
-unsigned char nRF24L01_read_while_write(unsigned char data);
-unsigned char nRF24L01_write_to_addr(unsigned char address, unsigned char data);
-unsigned char nRF24L01_read_from_addr(unsigned char address);
-unsigned char nRF24L01_read_from_addr_to_buf(unsigned char address, unsigned char *buffer, unsigned char length);
-unsigned char nRF24L01_write_to_addr_from_buf(unsigned char address, unsigned char *buffer, unsigned char length);
+extern unsigned char nRF24L01_read_while_write(unsigned char data);
+extern unsigned char nRF24L01_write_to_addr(unsigned char address, unsigned char data);
+extern unsigned char nRF24L01_read_from_addr(unsigned char address);
+extern unsigned char nRF24L01_read_from_addr_to_buf(unsigned char address, unsigned char *buffer, unsigned char length);
+extern unsigned char nRF24L01_write_to_addr_from_buf(unsigned char address, unsigned char *buffer, unsigned char length);
 /**
  * @return
  *  0x10  达到最大重发次数，发送失败
  *  0x20  成功发送完成
  *  0xff  发送失败
  */
-unsigned char nRF24L01_transmit_packet(unsigned char *buffer);
+extern unsigned char nRF24L01_transmit_packet(unsigned char *buffer);
 /**
  * @return
  *  0   成功收到数据
  *  1   没有收到数据
  */
-unsigned char nRF24L01_receive_packet(unsigned char *buffer);
+extern unsigned char nRF24L01_receive_packet(unsigned char *buffer);
 /**
  * @return
  *  0: 存在
  *  1: 不存在
  */
-unsigned char nRF24L01_check();
-void nRF24L01_configuration();
-void nRF24L01_send_buffer(unsigned char *buffer);
+extern unsigned char nRF24L01_check();
+extern void nRF24L01_configuration();
+extern void nRF24L01_send_buffer(unsigned char *buffer);
 
 #endif  // __NRF24L01_H__
