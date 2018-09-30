@@ -8,13 +8,21 @@ const unsigned char RX_ADDRESS[RX_ADR_WIDTH]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 unsigned char nRF24L01_read_while_write(unsigned char data)
 {
   unsigned char i;
+  
+  SCK_Write(0);
+  
   for(i=0; i<8; i++)
   {
+	delay_pro(1);
+	
   //  MOSI = data & 0x80;
 	MOSI_Write(data & 0x80);
     data <<= 1;
   //  SCK = 1;
 	SCK_Write(1);
+	
+	delay_pro(1);
+	
   //  data |= MISO;
   data |= MISO_Read();
   //  SCK = 0;

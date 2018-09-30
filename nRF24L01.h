@@ -4,12 +4,12 @@
 
 #ifdef __SDCC_mcs51 //使用SDCC作为51编译器
 #include "mcs51/8051.h"
-#define CE              P2_7
-#define CSN             P2_6
-#define SCK             P2_5
-#define MOSI            P2_4
-#define MISO            P2_3
-#define IRQ             P2_2
+#define CE              P1_7
+#define CSN             P1_6
+#define SCK             P1_5
+#define MOSI            P1_4
+#define MISO            P1_3
+#define IRQ             P1_2
 
 #define CE_Write(a)     (CE=a)
 #define CSN_Write(a)     (CSN=a)
@@ -25,8 +25,10 @@
 #define MISO_Read()       (MISO)
 #define IRQ_Read()       (IRQ)
 
-#define Soft_SPI_Init()   
-`
+#define Soft_SPI_Init()
+   
+#define delay_pro(a)  {unsigned int i=a;while(i--);}
+
 #else 
 #error not supported	
 #endif
